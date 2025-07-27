@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Light Bulb</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            transition: all 0.8s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Dark theme (default) */
+        body.dark {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #666;
+        }
+
+        /* Light theme (when bulb is on) */
+        body.light {
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 50%, #F0E68C 100%);
+            color: #333;
+        }
+
+        .room-container {
+            position: relative;
+            width: 400px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Ceiling fixture */
+        .ceiling-mount {
+            width: 80px;
+            height: 20px;
+            background: #444;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: all 0.8s ease;
+        }
+
+        body.light .ceiling-mount {
+            background: #666;
+            box-shadow: 0 2px 20px rgba(255,255,255,0.3);
+        }
+
+        /* Light bulb container */
+        .bulb-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .light-bulb {
+            width: 100px;
+            height: 140px;
+            background: #333;
+            border-radius: 50px 50px 20px 20px;
+            position: relative;
+            transition: all 0.8s ease;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* Bulb base/screw threads */
+        .bulb-base {
+            width: 40px;
+            height: 30px;
+            background: #555;
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0 0 10px 10px;
+            transition: all 0.8s ease;
+        }
+
+        .bulb-base::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: #444;
+            top: 5px;
+            box-shadow: 0 6px 0 #444, 0 12px 0 #444;
+        }
+
+        /* Glowing effect when on */
+        body.light .light-bulb {
+            background: radial-gradient(circle, #FFF8DC 0%, #FFD700 70%, #FFA500 100%);
+            box-shadow: 
+                0 0 50px rgba(255, 215, 0, 0.8),
+                0 0 100px rgba(255, 215, 0, 0.4),
+                inset 0 0 30px rgba(255, 255, 255, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        body.light .bulb-base {
+            background: #888;
+        }
+
+        body.light .bulb-base::before {
+            background: #666;
+            box-shadow: 0 6px 0 #666, 0 12px 0 #666;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 
+                    0 0 40px rgba(255, 215, 0, 0.6),
+                    0 0 80px rgba(255, 215, 0, 0.3),
+                    inset 0 0 30px rgba(255, 255, 255, 0.3);
+            }
+            to {
+                box-shadow: 
+                    0 0 60px rgba(255, 215, 0, 1),
+                    0 0 120px rgba(255, 215, 0, 0.5),
+                    inset 0 0 40px rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        /* Pull string */
+        .string-container {
+            position: relative;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .string {
+            width: 2px;
+            height: 80px;
+            background: linear-gradient(to bottom, #8B4513 0%, #A0522D  50%, #8B4513 100%);
+            margin-bottom: 10px;
+            transform-origin: top center;
+            transition: all 0.2s ease-out;
+            box-shadow: 1px 0 2px rgba(0,0,0,0.3);
+            animation: naturalSwing 4s ease-in-out infinite;
+        }
+
+        .string.swinging {
+            animation: swingMotion 0.8s ease-out;
+        }
+
+        .string.pulling {
+            transform: scaleY(1.3) translateY(10px);
+            transition: all 0.1s ease-out;
+        }
+
+        .string.released {
+            animation: snapBack 0.4s ease-out;
+        }
+
+        @keyframes naturalSwing {
+            0%, 100% { transform: rotate(-1deg); }
+            50% { transform: rotate(1deg); }
+        }
+
+        @keyframes swingMotion {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(8deg); }
+            50% { transform: rotate(-5deg); }
+            75% { transform: rotate(3deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        @keyframes snapBack {
+            0% { transform: scaleY(1.3) translateY(10px); }
+            30% { transform: scaleY(0.9) translateY(-5px); }
+            60% { transform: scaleY(1.1) translateY(2px); }
+            100% { transform: scaleY(1) translateY(0px) rotate(0deg); }
+        }
+
+        /* Pull handle */
+        .pull-handle {
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #D2691E 0%, #8B4513 100%);
+            border-radius: 50%;
+            cursor: grab;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            position: relative;
+            user-select: none;
+        }
+
+        .pull-handle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+        }
+
+        .pull-handle:active,
+        .pull-handle.dragging {
+            cursor: grabbing;
+            transform: scale(0.95);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+        }
+
+        .pull-handle.being-pulled {
+            transform: scale(0.9) translateY(15px);
+            transition: none;
+        }
+
+        /* Status text */
+        .status-text {
+            position: absolute;
+            bottom: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.8s ease;
+            text-align: center;
+        }
+
+        body.dark .status-text {
+            color: #666;
+            text-shadow: none;
+        }
+
+        body.light .status-text {
+            color: #2F4F4F;
+            text-shadow: 0 1px 3px rgba(255,255,255,0.5);
+        }
+
+        /* Decorative elements for light theme */
+        .room-decoration {
+            position: absolute;
+            opacity: 0;
+            transition: all 1s ease;
+        }
+
+        body.light .room-decoration {
+            opacity: 1;
+        }
+
+        .decoration-1 {
+            top: 20%;
+            left: 10%;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 182, 193, 0.7);
+            border-radius: 50%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .decoration-2 {
+            top: 30%;
+            right: 15%;
+            width: 40px;
+            height: 40px;
+            background: rgba(173, 216, 230, 0.7);
+            border-radius: 50%;
+            animation: float 4s ease-in-out infinite reverse;
+        }
+
+        .decoration-3 {
+            bottom: 25%;
+            left: 20%;
+            width: 50px;
+            height: 50px;
+            background: rgba(144, 238, 144, 0.7);
+            border-radius: 50%;
+            animation: float 3.5s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 480px) {
+            .room-container {
+                width: 300px;
+                height: 400px;
+            }
+            
+            .light-bulb {
+                width: 80px;
+                height: 112px;
+            }
+            
+            .string {
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body class="dark">
+    <div class="room-container">
+        <!-- Decorative elements for light theme -->
+        <div class="room-decoration decoration-1"></div>
+        <div class="room-decoration decoration-2"></div>
+        <div class="room-decoration decoration-3"></div>
+        
+        <!-- Ceiling mount -->
+        <div class="ceiling-mount"></div>
+        
+        <!-- Light bulb -->
+        <div class="bulb-container">
+            <div class="light-bulb"></div>
+            <div class="bulb-base"></div>
+        </div>
+        
+        <!-- Pull string -->
+        <div class="string-container">
+            <div class="string" id="string"></div>
+            <div class="pull-handle" id="pullHandle"></div>
+        </div>
+        
+        <!-- Status text -->
+        <div class="status-text" id="statusText">Pull the string to turn on the light</div>
+    </div>
+
+    <script>
+        class LightBulbController {
+            constructor() {
+                this.isLightOn = false;
+                this.isPulling = false;
+                this.pullThreshold = 20; // pixels to pull before triggering
+                this.startY = 0;
+                this.currentPull = 0;
+                
+                this.pullHandle = document.getElementById('pullHandle');
+                this.string = document.getElementById('string');
+                this.statusText = document.getElementById('statusText');
+                this.body = document.body;
+                
+                this.initEventListeners();
+                this.startNaturalSwing();
+            }
+
+            initEventListeners() {
+                // Mouse events for pulling
+                this.pullHandle.addEventListener('mousedown', (e) => this.startPull(e));
+                document.addEventListener('mousemove', (e) => this.handlePull(e));
+                document.addEventListener('mouseup', () => this.endPull());
+                
+                // Touch events for mobile
+                this.pullHandle.addEventListener('touchstart', (e) => this.startPull(e));
+                document.addEventListener('touchmove', (e) => this.handlePull(e));
+                document.addEventListener('touchend', () => this.endPull());
+                
+                // Keyboard support for accessibility
+                this.pullHandle.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.simulatePull();
+                    }
+                });
+                
+                // Prevent context menu on right click
+                this.pullHandle.addEventListener('contextmenu', (e) => e.preventDefault());
+                
+                // Make the handle focusable
+                this.pullHandle.setAttribute('tabindex', '0');
+                this.pullHandle.setAttribute('role', 'button');
+                this.pullHandle.setAttribute('aria-label', 'Pull string to toggle light');
+            }
+
+            startPull(e) {
+                if (this.isPulling) return;
+                
+                this.isPulling = true;
+                this.startY = this.getEventY(e);
+                this.currentPull = 0;
+                
+                this.pullHandle.classList.add('dragging');
+                this.string.classList.remove('swinging', 'released');
+                
+                // Stop natural swing animation
+                this.string.style.animation = 'none';
+                
+                e.preventDefault();
+            }
+
+            handlePull(e) {
+                if (!this.isPulling) return;
+                
+                const currentY = this.getEventY(e);
+                const pullDistance = Math.max(0, currentY - this.startY);
+                this.currentPull = Math.min(pullDistance, 50); // Max pull distance
+                
+                // Update string and handle position
+                const pullRatio = this.currentPull / 50;
+                const stringStretch = 1 + (pullRatio * 0.4); // Max 40% stretch
+                const handleOffset = this.currentPull;
+                
+                this.string.style.transform = `scaleY(${stringStretch})`;
+                this.string.classList.toggle('pulling', this.currentPull > 5);
+                
+                this.pullHandle.style.transform = `translateY(${handleOffset}px) scale(${0.9 + pullRatio * 0.1})`;
+                this.pullHandle.classList.toggle('being-pulled', this.currentPull > 10);
+                
+                // Visual feedback for threshold
+                if (this.currentPull >= this.pullThreshold) {
+                    this.statusText.textContent = 'Release to toggle light!';
+                    this.pullHandle.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.8)';
+                } else {
+                    this.statusText.textContent = this.isLightOn ? 
+                        'Pull down to turn off the light' : 'Pull down to turn on the light';
+                    this.pullHandle.style.boxShadow = '';
+                }
+                
+                e.preventDefault();
+            }
+
+            endPull() {
+                if (!this.isPulling) return;
+                
+                this.isPulling = false;
+                this.pullHandle.classList.remove('dragging', 'being-pulled');
+                
+                // Check if pulled enough to trigger
+                if (this.currentPull >= this.pullThreshold) {
+                    this.toggleLight();
+                }
+                
+                // Reset positions and restart natural swing
+                this.resetStringPosition();
+            }
+
+            resetStringPosition() {
+                this.string.classList.remove('pulling');
+                this.string.classList.add('released');
+                this.pullHandle.style.transform = '';
+                this.pullHandle.style.boxShadow = '';
+                
+                setTimeout(() => {
+                    this.string.style.animation = '';
+                    this.string.classList.add('swinging');
+                    
+                    setTimeout(() => {
+                        this.string.classList.remove('swinging', 'released');
+                        this.startNaturalSwing();
+                    }, 800);
+                }, 400);
+            }
+
+            startNaturalSwing() {
+                // Resume natural swing animation
+                this.string.style.animation = 'naturalSwing 4s ease-in-out infinite';
+            }
+
+            simulatePull() {
+                // For keyboard accessibility
+                this.string.classList.add('pulling');
+                this.pullHandle.classList.add('being-pulled');
+                
+                setTimeout(() => {
+                    this.toggleLight();
+                    this.resetStringPosition();
+                }, 200);
+            }
+
+            getEventY(e) {
+                return e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            }
+
+            toggleLight() {
+                this.isLightOn = !this.isLightOn;
+                this.updateLightState();
+                
+                // Add swing effect after toggle
+                setTimeout(() => {
+                    this.string.classList.add('swinging');
+                }, 100);
+            }
+
+            updateLightState() {
+                if (this.isLightOn) {
+                    this.body.classList.remove('dark');
+                    this.body.classList.add('light');
+                    this.statusText.textContent = 'The light is on! Pull to turn off';
+                    this.pullHandle.setAttribute('aria-label', 'Pull string to turn off light');
+                } else {
+                    this.body.classList.remove('light');
+                    this.body.classList.add('dark');
+                    this.statusText.textContent = 'Pull the string to turn on the light';
+                    this.pullHandle.setAttribute('aria-label', 'Pull string to turn on light');
+                }
+            }
+        }
+
+        // Initialize the light bulb controller when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new LightBulbController();
+        });
+
+        // Add some sparkle effects when the light turns on
+        function createSparkles() {
+            const sparkleContainer = document.createElement('div');
+            sparkleContainer.style.position = 'absolute';
+            sparkleContainer.style.top = '0';
+            sparkleContainer.style.left = '0';
+            sparkleContainer.style.width = '100%';
+            sparkleContainer.style.height = '100%';
+            sparkleContainer.style.pointerEvents = 'none';
+            sparkleContainer.style.zIndex = '1000';
+            
+            for (let i = 0; i < 20; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.style.position = 'absolute';
+                sparkle.style.width = '4px';
+                sparkle.style.height = '4px';
+                sparkle.style.background = '#FFD700';
+                sparkle.style.borderRadius = '50%';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                sparkle.style.animation = `sparkle 1s ease-out forwards`;
+                sparkle.style.opacity = '0';
+                
+                sparkleContainer.appendChild(sparkle);
+            }
+            
+            document.body.appendChild(sparkleContainer);
+            
+            setTimeout(() => {
+                document.body.removeChild(sparkleContainer);
+            }, 1000);
+        }
+
+        // Add sparkle animation CSS
+        const sparkleStyle = document.createElement('style');
+        sparkleStyle.textContent = `
+            @keyframes sparkle {
+                0% {
+                    opacity: 0;
+                    transform: scale(0) rotate(0deg);
+                }
+                50% {
+                    opacity: 1;
+                    transform: scale(1) rotate(180deg);
+                }
+                100% {
+                    opacity: 0;
+                    transform: scale(0) rotate(360deg);
+                }
+            }
+        `;
+        document.head.appendChild(sparkleStyle);
+
+        // Trigger sparkles when light turns on
+        document.addEventListener('DOMContentLoaded', () => {
+            const originalToggleLight = LightBulbController.prototype.toggleLight;
+            LightBulbController.prototype.toggleLight = function() {
+                originalToggleLight.call(this);
+                if (!this.isLightOn) { // Will be true after toggle
+                    setTimeout(createSparkles, 200);
+                }
+            };
+        });
+    </script>
+</body>
+</html>
